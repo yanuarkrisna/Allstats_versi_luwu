@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 //import 'package:flutter_svg/flutter_svg.dart';
-import 'package:luwu_stats/homepage.dart';
+import 'package:luwu_stats/homepage/homepage.dart';
 
 void main() {
   runApp(const AllStatsApp());
