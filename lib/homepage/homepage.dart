@@ -264,6 +264,8 @@ class _HomePageState extends State<Homepage> {
                     images: carouselImages,
                     onDownload: downloadImage,
                   ),
+
+                  //widget menu ditengah yang 2 row itu
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: GridView.count(
@@ -276,7 +278,10 @@ class _HomePageState extends State<Homepage> {
                       crossAxisSpacing: 12, // Spasi horizontal antar item
                       children: [
                         _buildMenuButton('Publikasi', Icons.library_books),
-                        _buildMenuButton('Indikator', Icons.assessment),
+                        _buildMenuButton(
+                          'Indikator Strategis',
+                          Icons.assessment,
+                        ),
                         _buildMenuButton('Survei Kepuasan', Icons.favorite),
                         _buildMenuButton('Infografis', Icons.pie_chart),
                         _buildMenuButton('Media Sosial', Icons.share),
@@ -284,6 +289,8 @@ class _HomePageState extends State<Homepage> {
                       ],
                     ),
                   ),
+
+                  //widget menu pencarian
                   InkWell(
                     onTap: () => _openSearch(context),
                     child: Container(
@@ -306,7 +313,9 @@ class _HomePageState extends State<Homepage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 50),
+
+                  //widget buat tampilan list indikator strategis
                   Column(
                     children: [
                       Row(
