@@ -62,6 +62,13 @@ class _HomePageState extends State<Homepage> {
     return file.path;
   }
 
+  Future<void> requestStoragePermission() async {
+    var status = await Permission.storage.status;
+    if (!status.isGranted) {
+      await Permission.storage.request();
+    }
+  }
+
   // fungsi buat menu di tengah itu
   Widget _buildMenuButton(String title, IconData icon) {
     return Card(
@@ -256,13 +263,26 @@ class _HomePageState extends State<Homepage> {
         body: SingleChildScrollView(
           child: Center(
             child: Container(
-              width: MediaQuery.of(context).size.width * 0.9,
               child: Column(
                 children: [
                   // Carousel Section
-                  InfiniteCarousel(
-                    images: carouselImages,
-                    onDownload: downloadImage,
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color.fromARGB(255, 218, 88, 7),
+                          Color.fromARGB(255, 218, 88, 7),
+                          Color.fromARGB(255, 218, 88, 7),
+                          Colors.amberAccent,
+                        ],
+                      ),
+                    ),
+                    child: InfiniteCarousel(
+                      images: carouselImages,
+                      //onDownload: downloadImage,
+                    ),
                   ),
 
                   //widget menu ditengah yang 2 row itu
@@ -316,44 +336,47 @@ class _HomePageState extends State<Homepage> {
                   const SizedBox(height: 50),
 
                   //widget buat tampilan list indikator strategis
-                  Column(
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Indikator Strategis',
-                            style: TextStyle(
-                              color: Colors.blue,
-                              fontWeight: FontWeight.bold,
+                  Container(
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'Indikator Strategis',
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      _buildYearFilter(),
-                      const SizedBox(height: 10),
-                      //widget list indicator
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _filteredIndicators.length > 3
-                            ? 3
-                            : _filteredIndicators.length,
-                        itemBuilder: (context, index) {
-                          return _buildIndicatorCard(
-                            _filteredIndicators[index],
-                          );
-                        },
-                      ),
-                      //widget teks liat semua
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () => _showAllIndicators(context),
-                          child: const Text('Lihat Semua'),
+                          ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 10),
+                        _buildYearFilter(),
+                        const SizedBox(height: 10),
+                        //widget list indicator
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _filteredIndicators.length > 3
+                              ? 3
+                              : _filteredIndicators.length,
+                          itemBuilder: (context, index) {
+                            return _buildIndicatorCard(
+                              _filteredIndicators[index],
+                            );
+                          },
+                        ),
+                        //widget teks liat semua
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () => _showAllIndicators(context),
+                            child: const Text('Lihat Semua'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
