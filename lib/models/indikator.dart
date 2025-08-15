@@ -14,7 +14,7 @@ class Indicator {
   });
 }
 
-// Data contoh
+// contoh data
 final List<Indicator> allIndicators = [
   Indicator(
     title: 'Tingkat Partisipasi Angk. Kerja',
@@ -40,6 +40,48 @@ final List<Indicator> allIndicators = [
   Indicator(
     title: 'Pertumbuhan Ekonomi',
     value: '5,02',
+    unit: 'Persen',
+    location: 'Kabupaten Luwu',
+    year: '2023',
+  ),
+  Indicator(
+    title: 'Jumlah Penduduk Miskin',
+    value: '11,04',
+    unit: 'Persen',
+    location: 'Kabupaten Luwu',
+    year: '2023',
+  ),
+  Indicator(
+    title: 'Jumlah Penduduk Miskin',
+    value: '11,04',
+    unit: 'Persen',
+    location: 'Kabupaten Luwu',
+    year: '2023',
+  ),
+  Indicator(
+    title: 'Jumlah Penduduk Miskin',
+    value: '11,04',
+    unit: 'Persen',
+    location: 'Kabupaten Luwu',
+    year: '2023',
+  ),
+  Indicator(
+    title: 'Jumlah Penduduk Miskin',
+    value: '11,04',
+    unit: 'Persen',
+    location: 'Kabupaten Luwu',
+    year: '2023',
+  ),
+  Indicator(
+    title: 'Jumlah Penduduk Miskin',
+    value: '11,04',
+    unit: 'Persen',
+    location: 'Kabupaten Luwu',
+    year: '2023',
+  ),
+  Indicator(
+    title: 'Jumlah Penduduk Miskin',
+    value: '11,04',
     unit: 'Persen',
     location: 'Kabupaten Luwu',
     year: '2023',

@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:photo_view/photo_view.dart';
+import 'fullscreen_image.dart';
 
 class InfiniteCarousel extends StatefulWidget {
   final List<String> images;
-  final Function(int)? onDownload;
 
-  const InfiniteCarousel({super.key, required this.images, this.onDownload});
+  const InfiniteCarousel({super.key, required this.images});
 
   @override
   State<InfiniteCarousel> createState() => _InfiniteCarouselState();
 }
 
 class _InfiniteCarouselState extends State<InfiniteCarousel> {
-  //final PageController _pageController = PageController();
   int _currentPage = 0;
-  final PageController _pageController = PageController(
-    viewportFraction: 0.6, // Lebar tiap item jadi 80% layar
-  );
+  final PageController _pageController = PageController(viewportFraction: 0.9);
 
   @override
   void initState() {
@@ -24,6 +20,7 @@ class _InfiniteCarouselState extends State<InfiniteCarousel> {
     _startAutoScroll();
   }
 
+  //fungsi auto looping
   void _startAutoScroll() {
     Future.delayed(const Duration(seconds: 5), () {
       if (!mounted) return;
@@ -31,7 +28,7 @@ class _InfiniteCarouselState extends State<InfiniteCarousel> {
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       );
-      _startAutoScroll(); // Loop terus
+      _startAutoScroll();
     });
   }
 
@@ -46,7 +43,7 @@ class _InfiniteCarouselState extends State<InfiniteCarousel> {
     return Column(
       children: [
         SizedBox(
-          height: MediaQuery.of(context).size.height * 0.25,
+          height: MediaQuery.of(context).size.height * 0.3,
           child: PageView.builder(
             controller: _pageController,
             onPageChanged: (index) {
@@ -61,25 +58,8 @@ class _InfiniteCarouselState extends State<InfiniteCarousel> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => Scaffold(
-                        appBar: AppBar(
-                          title: const Text("Zoom"),
-                          actions: [
-                            IconButton(
-                              icon: const Icon(Icons.download),
-                              onPressed: () {
-                                if (widget.onDownload != null) {
-                                  widget.onDownload!(imageIndex);
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                        body: PhotoView(
-                          imageProvider: AssetImage(widget.images[imageIndex]),
-                          minScale: PhotoViewComputedScale.contained * 0.8,
-                          maxScale: PhotoViewComputedScale.covered * 2,
-                        ),
+                      builder: (_) => ImageFullScreenPage(
+                        imagePath: widget.images[imageIndex],
                       ),
                     ),
                   );
@@ -87,21 +67,15 @@ class _InfiniteCarouselState extends State<InfiniteCarousel> {
                 child: Stack(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.black, width: 2),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.15,
-                            child: Image.asset(
-                              widget.images[imageIndex],
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                            ),
+                      padding: const EdgeInsets.all(20.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.5,
+                          child: Image.asset(
+                            widget.images[imageIndex],
+                            fit: BoxFit.cover,
+                            width: double.infinity,
                           ),
                         ),
                       ),

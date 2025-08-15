@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:luwu_stats/indikator_page/indikator_page.dart';
+import 'package:luwu_stats/indikator_page/indikator_widgets.dart';
 import 'infinite_carousel.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'search_page.dart';
 import 'package:luwu_stats/models/indikator.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -35,22 +38,25 @@ class _HomePageState extends State<Homepage> {
   }
 
   Future<void> downloadImage(int index) async {
-    // Request izin penyimpanan
-    if (await Permission.storage.request().isGranted) {
-      final dir = await getExternalStorageDirectory();
-      final imagePath = await getAssetPath(carouselImages[index]);
-
-      await FlutterDownloader.enqueue(
-        url: 'file://$imagePath',
-        savedDir: dir!.path,
-        fileName: 'image_${DateTime.now().millisecondsSinceEpoch}.png',
-        showNotification: true,
-        openFileFromNotification: true,
+    try {
+      // 1. Minta user memilih lokasi penyimpanan
+      String? savePath = await FilePicker.platform.saveFile(
+        dialogTitle: 'Simpan File PNG',
+        fileName:
+            'image_${DateTime.now().millisecondsSinceEpoch}.png', // Nama default
+        allowedExtensions: ['png'], // Filter ekstensi
+        type: FileType.custom,
       );
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Izin penyimpanan ditolak')));
+
+      if (savePath != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('File tersimpan di: $savePath')));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal menyimpan: ${e.toString()}')),
+      );
     }
   }
 
@@ -101,118 +107,6 @@ class _HomePageState extends State<Homepage> {
     showSearch(context: context, delegate: StatsSearchDelegate());
   }
 
-  //buat widget filter tahun
-  Widget _buildYearFilter() {
-    final years = allIndicators.map((e) => e.year).toSet().toList();
-
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _selectedYear,
-              items: years.map((year) {
-                return DropdownMenuItem<String>(value: year, child: Text(year));
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedYear = newValue!;
-                  _filteredIndicators = _filterByYear(
-                    allIndicators,
-                    _selectedYear,
-                  );
-                });
-              },
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  //widget untuk build card view indikator strategis
-  Widget _buildIndicatorCard(Indicator indicator) {
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(5),
-        side: BorderSide(color: Colors.orange, width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              indicator.location,
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              indicator.title,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  indicator.value,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue[800],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    indicator.unit,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Method untuk menampilkan semua indikator (semenstara msh popup)
-  void _showAllIndicators(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.8,
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              const Text('Semua Indikator', style: TextStyle(fontSize: 18)),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _filteredIndicators.length,
-                  itemBuilder: (context, index) {
-                    return _buildIndicatorCard(_filteredIndicators[index]);
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -223,23 +117,23 @@ class _HomePageState extends State<Homepage> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color.fromARGB(255, 218, 88, 7),
-                  Color.fromARGB(255, 218, 88, 7),
-                  Color.fromARGB(255, 218, 88, 7),
-                  Colors.amberAccent,
-                ],
+                colors: [Color.fromARGB(255, 2, 155, 198), Colors.amberAccent],
               ),
             ),
           ),
           title: Container(
             height: 80,
             padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Image.asset(
-              'assets/images/mattapa.png',
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.image),
+            child: Row(
+              children: [
+                Image.asset(
+                  'assets/images/mattapa.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.image),
+                ),
+                const Text('Selamat Datang', style: TextStyle(fontSize: 14)),
+              ],
             ),
           ),
           actions: [
@@ -266,24 +160,7 @@ class _HomePageState extends State<Homepage> {
               child: Column(
                 children: [
                   // Carousel Section
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color.fromARGB(255, 218, 88, 7),
-                          Color.fromARGB(255, 218, 88, 7),
-                          Color.fromARGB(255, 218, 88, 7),
-                          Colors.amberAccent,
-                        ],
-                      ),
-                    ),
-                    child: InfiniteCarousel(
-                      images: carouselImages,
-                      //onDownload: downloadImage,
-                    ),
-                  ),
+                  Container(child: InfiniteCarousel(images: carouselImages)),
 
                   //widget menu ditengah yang 2 row itu
                   Padding(
@@ -339,6 +216,7 @@ class _HomePageState extends State<Homepage> {
                   Container(
                     width: MediaQuery.of(context).size.width * 0.9,
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
@@ -352,7 +230,19 @@ class _HomePageState extends State<Homepage> {
                           ],
                         ),
                         const SizedBox(height: 10),
-                        _buildYearFilter(),
+                        YearFilter(
+                          selectedYear: _selectedYear,
+                          indicators: allIndicators,
+                          onYearChanged: (newYear) {
+                            setState(() {
+                              _selectedYear = newYear;
+                              _filteredIndicators = _filterByYear(
+                                allIndicators,
+                                newYear,
+                              );
+                            });
+                          },
+                        ),
                         const SizedBox(height: 10),
                         //widget list indicator
                         ListView.builder(
@@ -362,8 +252,8 @@ class _HomePageState extends State<Homepage> {
                               ? 3
                               : _filteredIndicators.length,
                           itemBuilder: (context, index) {
-                            return _buildIndicatorCard(
-                              _filteredIndicators[index],
+                            return IndicatorCard(
+                              indicator: _filteredIndicators[index],
                             );
                           },
                         ),
@@ -371,7 +261,16 @@ class _HomePageState extends State<Homepage> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () => _showAllIndicators(context),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => IndikatorPage(
+                                    indikatorList: allIndicators,
+                                  ),
+                                ),
+                              );
+                            },
                             child: const Text('Lihat Semua'),
                           ),
                         ),

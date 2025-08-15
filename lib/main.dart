@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:luwu_stats/homepage/homepage.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const AllStatsApp());
 }
 
