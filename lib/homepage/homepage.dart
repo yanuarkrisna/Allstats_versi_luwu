@@ -1,15 +1,14 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:luwu_stats/indikator_page/indikator_page.dart';
 import 'package:luwu_stats/indikator_page/indikator_widgets.dart';
+import 'package:luwu_stats/publikasi/publikasi_all.dart';
+import 'package:luwu_stats/publikasi/publikasi_card.dart';
 import 'infinite_carousel.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
-import 'package:flutter/services.dart';
 import 'search_page.dart';
 import 'package:luwu_stats/models/indikator.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:http/http.dart' as http;
+import 'package:luwu_stats/models/publikasi.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -26,6 +25,8 @@ class _HomePageState extends State<Homepage> {
   ];
   String _selectedYear = '2023';
   late List<Indicator> _filteredIndicators;
+  List<Publication> publications = [];
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -37,55 +38,14 @@ class _HomePageState extends State<Homepage> {
     return indicators.where((indicator) => indicator.year == year).toList();
   }
 
-  Future<void> downloadImage(int index) async {
-    try {
-      // 1. Minta user memilih lokasi penyimpanan
-      String? savePath = await FilePicker.platform.saveFile(
-        dialogTitle: 'Simpan File PNG',
-        fileName:
-            'image_${DateTime.now().millisecondsSinceEpoch}.png', // Nama default
-        allowedExtensions: ['png'], // Filter ekstensi
-        type: FileType.custom,
-      );
-
-      if (savePath != null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('File tersimpan di: $savePath')));
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menyimpan: ${e.toString()}')),
-      );
-    }
-  }
-
-  Future<String> getAssetPath(String asset) async {
-    final byteData = await rootBundle.load(asset);
-    final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/${asset.split('/').last}');
-    await file.writeAsBytes(byteData.buffer.asUint8List());
-    return file.path;
-  }
-
-  Future<void> requestStoragePermission() async {
-    var status = await Permission.storage.status;
-    if (!status.isGranted) {
-      await Permission.storage.request();
-    }
-  }
-
   // fungsi buat menu di tengah itu
-  Widget _buildMenuButton(String title, IconData icon) {
+  Widget _buildMenuButton(String title, IconData icon, VoidCallback onTap) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        onTap: () {
-          // Aksi ketika menu diklik
-          print('$title tapped');
-        },
+        onTap: onTap,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -105,6 +65,38 @@ class _HomePageState extends State<Homepage> {
   //fungsi buka search page
   void _openSearch(BuildContext context) {
     showSearch(context: context, delegate: StatsSearchDelegate());
+  }
+
+  Future<List<Publication>> fetchPublications({int limit = 0}) async {
+    const url =
+        "https://webapi.bps.go.id/v1/api/list/model/publication/domain/7317/key/20b34b1102b76110c8c41ad3ef5457b7/";
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('API Response: $data');
+
+        if (data.containsKey("data") && data["data"] is List) {
+          final List<dynamic> dataList = data["data"];
+          if (dataList.length > 1 && dataList[1] is List) {
+            final List<dynamic> publikasiList = dataList[1];
+            var result = publikasiList
+                .where((item) => item is Map<String, dynamic>)
+                .map((json) => Publication.fromJson(json));
+
+            // Jika limit > 0, ambil sejumlah limit, jika tidak ambil semua
+            return limit > 0 ? result.take(limit).toList() : result.toList();
+          }
+        }
+        throw Exception("Struktur data tidak sesuai");
+      } else {
+        throw Exception("Gagal load publikasi: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error fetching publikasi: $e");
+      throw Exception("Terjadi kesalahan: $e");
+    }
   }
 
   @override
@@ -174,15 +166,44 @@ class _HomePageState extends State<Homepage> {
                       mainAxisSpacing: 12, // Spasi vertikal antar baris
                       crossAxisSpacing: 12, // Spasi horizontal antar item
                       children: [
-                        _buildMenuButton('Publikasi', Icons.library_books),
+                        _buildMenuButton(
+                          'Publikasi',
+                          Icons.library_books,
+                          () async {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Memuat semua publikasi...'),
+                              ),
+                            );
+                            try {
+                              final allPublications =
+                                  await fetchPublications(); // Tanpa limit
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AllPublicationsPage(),
+                                ),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Gagal memuat: $e')),
+                              );
+                            }
+                          },
+                        ),
                         _buildMenuButton(
                           'Indikator Strategis',
                           Icons.assessment,
+                          () {},
                         ),
-                        _buildMenuButton('Survei Kepuasan', Icons.favorite),
-                        _buildMenuButton('Infografis', Icons.pie_chart),
-                        _buildMenuButton('Media Sosial', Icons.share),
-                        _buildMenuButton('Lainnya', Icons.apps),
+                        _buildMenuButton(
+                          'Survei Kepuasan',
+                          Icons.favorite,
+                          () {},
+                        ),
+                        _buildMenuButton('Infografis', Icons.pie_chart, () {}),
+                        _buildMenuButton('Media Sosial', Icons.share, () {}),
+                        _buildMenuButton('Lainnya', Icons.apps, () {}),
                       ],
                     ),
                   ),
@@ -218,16 +239,12 @@ class _HomePageState extends State<Homepage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Text(
-                              'Indikator Strategis',
-                              style: TextStyle(
-                                color: Colors.blue,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          'Indikator Strategis',
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 10),
                         YearFilter(
@@ -270,6 +287,83 @@ class _HomePageState extends State<Homepage> {
                                   ),
                                 ),
                               );
+                            },
+                            child: const Text('Lihat Semua'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  //widget container buat publikasi
+                  Container(
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Publikasi Terbaru',
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                        FutureBuilder<List<Publication>>(
+                          future: fetchPublications(limit: 3),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            } else if (snapshot.hasError) {
+                              return Center(
+                                child: Text("Error: ${snapshot.error}"),
+                              );
+                            } else if (!snapshot.hasData ||
+                                snapshot.data!.isEmpty) {
+                              return const Center(
+                                child: Text("Tidak ada publikasi"),
+                              );
+                            }
+
+                            final publications = snapshot.data!;
+                            return ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: publications.length,
+                              itemBuilder: (context, index) {
+                                return PublicationCard(
+                                  pub: publications[index],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () async {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Memuat semua publikasi...'),
+                                ),
+                              );
+                              try {
+                                final allPublications =
+                                    await fetchPublications(); // Tanpa limit
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => AllPublicationsPage(),
+                                  ),
+                                );
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Gagal memuat: $e')),
+                                );
+                              }
                             },
                             child: const Text('Lihat Semua'),
                           ),

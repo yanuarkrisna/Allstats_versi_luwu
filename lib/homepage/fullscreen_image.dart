@@ -9,41 +9,12 @@ class ImageFullScreenPage extends StatelessWidget {
   const ImageFullScreenPage({Key? key, required this.imagePath})
     : super(key: key);
 
-  // Future<void> saveImageToGallery(
-  //   String assetPath,
-  //   BuildContext context,
-  // ) async {
-  //   try {
-  //     // Ambil bytes dari asset
-  //     final bytes = await rootBundle.load(assetPath);
-  //     final result = await ImageGallerySaver.saveImage(
-  //       bytes.buffer.asUint8List(),
-  //       quality: 100,
-  //       name: assetPath.split('/').last.split('.').first,
-  //     );
-
-  //     if (result['isSuccess'] == true) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(content: Text('✅ Gambar berhasil disimpan ke galeri')),
-  //       );
-  //     } else {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(content: Text('❌ Gagal menyimpan gambar')),
-  //       );
-  //     }
-  //   } catch (e) {
-  //     ScaffoldMessenger.of(
-  //       context,
-  //     ).showSnackBar(SnackBar(content: Text('⚠️ Error: $e')));
-  //   }
-  // }
-
   Future<Uint8List> loadAssetImageAsBytes(String path) async {
     final byteData = await rootBundle.load(path);
     return byteData.buffer.asUint8List();
   }
 
-  Future<void> _saveImage(BuildContext context, String imageOath) async {
+  Future<void> _saveImage(BuildContext context, String imagePath) async {
     try {
       // 1. Ambil bytes dari assets
       final bytes = await loadAssetImageAsBytes(imagePath);
